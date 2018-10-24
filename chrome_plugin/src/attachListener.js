@@ -2,11 +2,14 @@ import { select } from './optimal-select.js';
 
 function attach() {
 	console.log('attach');
+
+	//Monitor input and textarea entered text
 	const inputs = document.querySelectorAll('input, textarea');
 	for (let i = 0; i < inputs.length; i++) {
 		inputs[i].addEventListener('input', handleInput, true);
 	}
 
+	//Observe mutations of all elements to add monitors on inputs and textareas
 	const observer = new MutationObserver(handleMutation);
 	const config = {
 		childList: true,
@@ -18,12 +21,18 @@ function attach() {
 		observer.observe(all[i], config);
 	}
 
+	//Minitor value change on Select elements (like drop-down menu)
 	const selects = document.querySelectorAll('select');
 	for (let i = 0; i < selects.length; i++) {
 		selects[i].addEventListener('change', handleChange,true); 
 	}
 
+	//Monitor click with selector
 	document.body.addEventListener('click', handleClick,true);
+
+	//Monitor form validation
+	const forms = document.querySelectorAll('form');
+	forms.forEach(form => form.addEventListener('submit', handleFormSubmit, true));
 }
 
 function handleMutation(mutations) {
@@ -43,10 +52,18 @@ function handleMutation(mutations) {
 	});
 }
 
+function handleFormSubmit(e){
+	chrome.runtime.sendMessage({
+		kind:'action',
+		action: {
+			type:'SubmitAction',
+			selector: computeSelector(e.target)
+		}
+	});
+}
+
 function handleClick (e) {
-	if (e.target.tagName.toLowerCase() !== 'input' ) {
-		chrome.runtime.sendMessage({kind:'action', action: {type:'ClickAction', selector: computeSelector(e.target)} });
-	}
+	chrome.runtime.sendMessage({kind:'action', action: {type:'ClickAction', selector: computeSelector(e.target)} });
 }
 
 function handleInput(e) {

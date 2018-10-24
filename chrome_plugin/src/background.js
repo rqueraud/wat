@@ -18,6 +18,8 @@ class PageManager {
 
 		chrome.webNavigation.onCommitted.addListener(this.webNavigationCommitted);
 		chrome.webNavigation.onCompleted.addListener(this.webNavigationCompleted);
+
+		this.addBrowserListeners();
 	}
 
 	start() {
@@ -117,7 +119,7 @@ class PageManager {
 	}
 
 	webNavigationCommitted({transitionType, url}) {
-		if (transitionType === 'reload' || transitionType === 'start_page') {
+		if (transitionType === 'reload' || transitionType === 'start_page' || transitionType === 'link') {
 			pageManager.scenario.push({type:'GotoAction', url:url});
 		}
 	}
@@ -140,7 +142,20 @@ class PageManager {
 				}
 			}
 		}
+		action.timestamp = Date.now();
 		this.scenario.push(action);
+	}
+
+	addBrowserListeners(){
+		//Monitor tab creation
+		chrome.tabs.onCreated.addListener(tab => {
+			chrome.runtime.sendMessage({kind:'action', action: {type:'TabCreatedAction', url: tab.url, title: tab.title} });
+		});
+
+		//Monitor tab removal
+		chrome.tabs.onCreated.addListener(tab => {
+			chrome.runtime.sendMessage({kind:'action', action: {type:'TabRemovedAction', url: tab.url, title: tab.title} });
+		});
 	}
 }
 
