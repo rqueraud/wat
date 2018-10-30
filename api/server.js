@@ -51,7 +51,12 @@ initRoutes();
 function initRoutes() {
 	MongoClient.connect(dbUrl)
 		.then(db => {
-			require('./login.js').init(serverNames,app,db, logger);
+			try{
+				require('./login.js').init(serverNames,app,db, logger);
+			}
+			catch(e){
+				logger.error("Error loading login.js : " + e.stack);
+			}
 			require('./routes/scenario.js').init(serverNames,app,db, logger);
 			require('./routes/run.js').init(serverNames,app,db, logger);
 			require('./routes/schedule.js').init(serverNames,app,db, logger);

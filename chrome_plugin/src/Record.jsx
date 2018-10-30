@@ -87,26 +87,28 @@ export default class Record extends React.Component {
 		if (this.state.redirect) {
 			return <Redirect to="/popup.html"/>;
 		}
+		if (this.state.start) {
+			return (
+				<div>
+					<p>Share your groupSessionToken : {this.props.groupSessionToken}</p>
+					<ButtonToolbar>
+						<Button bsStyle="primary" onClick={this.clickPublish}>Publish</Button>
+						<Button bsStyle="danger" onClick={this.clickReinit}>Delete</Button>
+						<Button bsStyle="danger" onClick={this.clickLogout}>Logout</Button>
+					</ButtonToolbar>
+				</div>
+			);
+		}
 		else {
-			if (this.state.start) {
-				return (
-					<div>
-						<ButtonToolbar>
-							<Button bsStyle="primary" onClick={this.clickPublish}>Publish</Button>
-							<Button bsStyle="danger" onClick={this.clickReinit}>Delete</Button>
-							<Button bsStyle="danger" onClick={this.clickLogout}>Logout</Button>
-						</ButtonToolbar>
-					</div>
-				);
-			}
-			else {
-				return (
+			return (
+				<div>
+					<p>Share your groupSessionToken : {this.props.groupSessionToken}</p>
 					<ButtonToolbar>
 						<Button bsStyle="primary" onClick={this.clickStart}>Record</Button>
 						<Button bsStyle="danger" onClick={this.clickLogout}>Logout</Button>
 					</ButtonToolbar>
-				);
-			}
+				</div>
+			);
 		}
 	}
 }

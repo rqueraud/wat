@@ -6,10 +6,37 @@ export function login(credentials) {
 		axios.post(url, credentials  )
 			.then( response => {
 				if (response.status === 200 ) {
-					console.log('correct');
+					console.log(`groupSessionToken in services : ${response.data.groupSessionToken}`);
 					resolve({
 						logged : true,
-						jwt: response.data.jwt
+						jwt: response.data.jwt,
+						groupSessionToken: response.data.groupSessionToken
+					});
+				} else {
+					console.log('incorrect');
+					resolve({
+						logged : false
+					});
+				}
+			})
+			.catch((ex) => {
+				console.log('incorrect');
+				reject(ex);
+			});
+	});
+}
+
+export function token(credentials){
+	return new Promise( (resolve, reject) => {
+		const url = `${BASE_URL}/api/token`;
+		axios.post(url, credentials  )
+			.then( response => {
+				if (response.status === 200 ) {
+					console.log(`groupSessionToken in services : ${response.data.groupSessionToken}`);
+					resolve({
+						logged : true,
+						jwt: response.data.jwt,
+						groupSessionToken: response.data.groupSessionToken
 					});
 				} else {
 					console.log('incorrect');

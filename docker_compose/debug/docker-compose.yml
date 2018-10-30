@@ -12,7 +12,7 @@ services:
       - "15672:15672"
   scheduler:
     build: 
-      context: https://github.com/webautotester/wat.git
+      context: ../../
       dockerfile: ./scheduler/Dockerfile
     image: "xblanc/wat_scheduler"
     depends_on:
@@ -20,7 +20,7 @@ services:
       - "mongo"
   api:
     build: 
-      context: https://github.com/webautotester/wat.git
+      context: ../../
       dockerfile: ./api/Dockerfile
     image: "xblanc/wat_api"
     environment:
@@ -31,7 +31,7 @@ services:
       - "mongo"
   front:
     build: 
-      context: https://github.com/webautotester/wat.git
+      context: ../../
       dockerfile: ./front/DockerfileDebug
     image: "xblanc/wat_front"
     volumes:
@@ -43,7 +43,7 @@ services:
       - "api"
   player1:
     build: 
-      context: https://github.com/webautotester/wat.git
+      context: ../../
       dockerfile: ./player/Dockerfile
     image: "xblanc/wat_player"
     volumes:
@@ -53,7 +53,7 @@ services:
       - "mongo"
   player2:
     build: 
-      context: https://github.com/webautotester/wat.git
+      context: ../../
       dockerfile: ./player/Dockerfile
     image: "xblanc/wat_player"
     volumes:
