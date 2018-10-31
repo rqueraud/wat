@@ -1,4 +1,4 @@
-import { login , getJWTFromGitHubSession, postScenario , token } from './services.js';
+import { login , getJWTFromGitHubSession, postScenario , token, getEntropies } from './services.js';
 
 class PageManager {
 	constructor() {
@@ -7,6 +7,7 @@ class PageManager {
 		this.isLoggedIn = false;
 		this.windowId = 0;
 		this.tabId = 0;
+		this.groupSessionToken = '';
 		this.handleMessage = this.handleMessage.bind(this);
 		this.startRecording = this.startRecording.bind(this);
 		this.startRecording = this.startRecording.bind(this);
@@ -28,6 +29,7 @@ class PageManager {
 
 	handleMessage(msg, sender, sendResponse) {
 		switch (msg.kind) {
+
 		case 'login':
 			login(msg.credential)
 				.then(response => {
@@ -37,7 +39,8 @@ class PageManager {
 						this.isLoggedIn = true;
 						this.jwt = response.jwt;
 					}
-					let responseToMsg = {isLoggedIn : this.isLoggedIn, groupSessionToken: response.groupSessionToken};
+					this.groupSessionToken = response.groupSessionToken;
+					let responseToMsg = {isLoggedIn : this.isLoggedIn, groupSessionToken: this.groupSessionToken};
 					sendResponse(responseToMsg);
 				})
 				.catch((ex) => {
@@ -45,6 +48,7 @@ class PageManager {
 					sendResponse(false);
 				});
 			return true;
+
 		case 'token':
 			token(msg.credential)
 				.then(response => {
@@ -54,6 +58,7 @@ class PageManager {
 						this.isLoggedIn = true;
 						this.jwt = response.jwt;
 					}
+					this.groupSessionToken = response.groupSessionToken;
 					let responseToMsg = {isLoggedIn : this.isLoggedIn};
 					sendResponse(responseToMsg);
 				})
@@ -62,6 +67,7 @@ class PageManager {
 					sendResponse(false);
 				});
 			return true;
+
 		case 'github':
 			getJWTFromGitHubSession(msg.code)
 				.then(response => {
@@ -71,6 +77,7 @@ class PageManager {
 						this.isLoggedIn = true;
 						this.jwt = response.jwt;
 					}
+					this.groupSessionToken = response.groupSessionToken;
 					let responseToMsg = {isLoggedIn : this.isLoggedIn};
 					sendResponse(responseToMsg);
 				})
@@ -79,16 +86,19 @@ class PageManager {
 					sendResponse(false);
 				});
 			return true;
+
 		case 'logout':
 			this.isLoggedIn = false;
 			this.jwt = undefined;
 			break;
+
 		case 'start':
 			this.startRecording();
 			break;
+
 		case 'publish':
 			var recordedScenario = this.getRecordedScenarioAndStop();
-			postScenario(recordedScenario, this.jwt)
+			postScenario(recordedScenario, this.jwt, msg.groupSessionToken)
 				.then( response => {
 					sendResponse(response);
 				})
@@ -96,18 +106,40 @@ class PageManager {
 					sendResponse(ex);
 				});
 			return true;
+
 		case 'reinit':
 			this.reinitRecording();
 			break;
+
 		case 'getState':
+			chrome.extension.getBackgroundPage().console.log(`getState groupSessionToken is : ${this.groupSessionToken}`);
 			sendResponse({
 				isLoggedIn: this.isLoggedIn,
-				isRecording: this.isRecording
+				isRecording: this.isRecording,
+				groupSessionToken: this.groupSessionToken
 			});
 			break;
+
 		case 'action' :
 			if (this.isRecording) this.addActionToScenario(msg.action);
 			break;
+
+		case 'getEntropies':
+			getEntropies(this.jwt, msg.groupSessionToken, msg.number)
+				.then(data => {
+					chrome.extension.getBackgroundPage().console.log(`data is : ${JSON.stringify(data)}`);
+					let values = data.map(datum => datum.value);
+					chrome.extension.getBackgroundPage().console.log(`values are : ${JSON.stringify(values)}`);
+					sendResponse({
+						data: values
+					});
+				})
+				.catch((ex) => {
+					//console.log(ex);
+					chrome.extension.getBackgroundPage().console.log(`Error while getting data !`);
+					sendResponse(false);
+				});
+			return true;
 		}
 	}
 

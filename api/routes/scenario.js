@@ -52,13 +52,15 @@ function init(serverNames, webServer, db, logger) {
 
 	router
 		.post('/',(req, res) => {
+			logger.info(`GroupSessionToken is : ${req.body.groupSessionToken}`);
 			let user = req.user;
 			db.collection('scenario', (err, scenarioCollection) => {
 				if (err) {
 					res.status(404).send(err).end();
 				} else {
 					var newScenario = {};
-					newScenario = req.body;
+					newScenario = req.body.scenario;
+					newScenario.groupSessionToken = req.body.groupSessionToken;
 					if (newScenario._id === null || newScenario._id === undefined) {
 						newScenario._id = new ObjectID();
 					} else {
@@ -69,7 +71,7 @@ function init(serverNames, webServer, db, logger) {
 					} else {
 						newScenario.uid = new ObjectID(newScenario.uid);
 					}
-					scenarioCollection.findOneAndReplace({_id:newScenario._id},newScenario, {upsert:true})
+					scenarioCollection.findOneAndReplace({_id:newScenario._id}, newScenario, {upsert:true})
 						.then(savedScenario => {
 							res.status(200).send(savedScenario).end();
 						})
@@ -100,7 +102,27 @@ function init(serverNames, webServer, db, logger) {
 						});
 				}
 			});					
-		}); 
+		});
+
+	router
+		.get('/group/:groupSessionToken', (req, res) => {
+			db.collection('scenario', {strict:true}, (err, scenarioCollection) => {
+				if (err) {
+					logger.info('Collection scenario not created yet !');
+					res.status(404).send(err).end();
+				} else {
+					scenarioCollection.find({groupSessionToken: req.params.groupSessionToken}).toArray()
+						.then(scenariosArray => {
+							logger.info(`RouteScenario: response to GET = ${scenariosArray}`);
+							res.status(200).send(scenariosArray).end();
+						})
+						.catch(err => {
+							logger.error(`RouteScenario: response to GET = ${err}`);
+							res.status(500).send(err).end();
+						});
+				}
+			});
+		});
 
 	webServer.use('/api/scenario', router);
 }

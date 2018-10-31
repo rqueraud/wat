@@ -60,6 +60,7 @@ function initRoutes() {
 			require('./routes/scenario.js').init(serverNames,app,db, logger);
 			require('./routes/run.js').init(serverNames,app,db, logger);
 			require('./routes/schedule.js').init(serverNames,app,db, logger);
+			require('./routes/entropy.js').init(serverNames,app,db, logger);
 
 			app.get('*', (req,res) => {
 				res.sendFile(path.join(applicationRoot, './app/index.html'));
