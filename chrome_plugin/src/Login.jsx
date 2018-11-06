@@ -18,6 +18,7 @@ export default class Login extends React.Component {
 		};
 		this.handleSubmit = this.handleSubmit.bind(this);
 		this.handleGitHub = this.handleGitHub.bind(this);
+		this.handleToken = this.handleToken.bind(this);
 	}
 
 	componentDidMount() {
@@ -42,14 +43,18 @@ export default class Login extends React.Component {
 			username: document.getElementById('username').value,
 			password: document.getElementById('password').value
 		};
+		console.log('Login submit is going to send message');
 		chrome.runtime.sendMessage({ kind: 'login' , credential: credential }, (response) => {
-			console.log(`isLogged:${response.isLoggedIn}`);
+			console.log(`isLoggedIn:${response.isLoggedIn}`);
 			if (response.isLoggedIn) {
+				console.log(`groupSessionToken in react : ${response.groupSessionToken}`);
+				this.props.callbackFromParent(response.groupSessionToken);
 				this.setState(() => {
 					return {
 						credential: credential,
 						isLoggedIn : true,
-						message : null
+						message : null,
+						token: response.groupSessionToken
 					};
 				});
 				button.removeChild(span);
@@ -58,7 +63,8 @@ export default class Login extends React.Component {
 					return {
 						credential: credential,
 						isLoggedIn : false,
-						message : 'Invalid username or password.'
+						message : 'Invalid username or password.',
+						token: ''
 					};
 				});
 				button.removeChild(span);
@@ -96,6 +102,16 @@ export default class Login extends React.Component {
 		);
 	}
 
+	handleToken(event){
+		event.preventDefault();
+		console.log('Handle token from login');
+		this.setState(() => {
+			return {
+				wantToken: true
+			};
+		});
+	}
+
 	render() {
 		let gitHub;
 		if (process.env.NODE_ENV === 'debug') {
@@ -105,8 +121,13 @@ export default class Login extends React.Component {
 		}
 		
 		if (this.state.isLoggedIn) {
+			console.log('Join token is : ' + this.state.token);
 			return <Redirect to="/record"/>;
-		} else {
+		} 
+		else if(this.state.wantToken){
+			return <Redirect to="/token"/>;
+		}
+		else {
 			return (
 				<Form horizontal onSubmit={this.handleSubmit}>
 					<FormGroup>
@@ -130,6 +151,7 @@ export default class Login extends React.Component {
 						<Col xsOffset={2} xs={10}><Button id="loginButton" bsStyle="primary" type="submit">Login</Button></Col>
 					</FormGroup>
 					{gitHub}
+					{<a href="#" onClick={this.handleToken}> Or join session with a Token </a>}
 				</Form>
 			);
 		}

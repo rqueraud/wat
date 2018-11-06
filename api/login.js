@@ -15,8 +15,6 @@ const JwtStrategy = passportJWT.Strategy;
 const GitHubStrategy = require('passport-github2').Strategy;
 const axios = require('axios');
 
-
-
 const ObjectID = require('mongodb').ObjectID;
 
 function init (serverNames, webServer, db, logger) {
@@ -87,14 +85,21 @@ function setJWTRoute(serverNames, webServer, db, logger) {
 				logger.info(`username=${username}`);
 				userCollection.findOne({type : 'wat', username : username})
 					.then( foundUser => {
+						logger.info(`On /api/login`);
 						logger.info(`user: ${JSON.stringify(foundUser)}`);
 						if (checkAuthentication(foundUser, username, password)) {
 							logger.info(`authentication is checked`);
 							var payload = {username: foundUser.username};
 							logger.info(`payload:${payload}`);
-							var token = jwt.sign(payload, jwtOptions.secretOrKey, {expiresIn:'4h'});
-							logger.info(`token:${token}`);
-							res.json({message: 'user authenticated!', username: foundUser.username, jwt: token});
+							let groupSessionToken = generateGroupSessionToken();
+							logger.info(`groupSessionToken is : ${groupSessionToken}`);
+							userCollection.updateOne({type : 'wat', username : username}, { $set: {groupSessionToken: groupSessionToken} }, {upsert: false})
+								.then(foundUser => {
+									var token = jwt.sign(payload, jwtOptions.secretOrKey, {expiresIn:'4h'});
+									logger.info(`token:${token}`);
+									res.json({message: 'user authenticated!', username: foundUser.username, jwt: token, groupSessionToken: groupSessionToken});
+								})
+								.catch(e => logger.error(e.stack));
 						} else {
 							logger.info('wrong username / password');
 							res.status(401).json({message:'wrong username / password'});
@@ -105,6 +110,28 @@ function setJWTRoute(serverNames, webServer, db, logger) {
 						logger.error(err);
 						res.status(404).json({message:JSON.stringify(err)});
 					});
+			}
+		});
+	});
+
+	webServer.post('/api/token', (req, res) => {
+		logger.info(`On /api/token with groupSessionToken ${req.body.groupSessionToken}`);
+		let groupSessionToken = req.body.groupSessionToken;
+		db.collection('user', (err, userCollection) => {
+			if (err) {
+				logger.error('error in collection');
+				logger.error(err);
+				res.status(404).json({message:JSON.stringify(err)});
+			} else {
+				userCollection.findOne({type : 'wat', groupSessionToken : eval(groupSessionToken)})
+					.then(foundUser => {
+						var payload = {username: foundUser.username};
+						logger.info(`payload:${payload}`);
+						var token = jwt.sign(payload, jwtOptions.secretOrKey, {expiresIn:'4h'});
+						logger.info(`token:${token}`);
+						res.json({message: 'user authenticated!', username: payload.username, jwt: token, groupSessionToken: groupSessionToken});
+					})
+					.catch(e => logger.error(e.stack));
 			}
 		});
 	});
@@ -133,7 +160,8 @@ function setJWTRoute(serverNames, webServer, db, logger) {
 					type : 'wat',
 					username : req.body.username,
 					salt : salt,
-					hash : hash
+					hash : hash,
+					groupSessionToken: generateGroupSessionToken()
 				};
 				userCollection.findOne({type : 'wat', username: newUser.username})
 					.then( (user) => {
@@ -314,6 +342,10 @@ function getGitHubUser(accessToken, logger) {
 				return Promise.reject('no profile');
 			}
 		});
+}
+
+function generateGroupSessionToken(){
+	return Date.now(); //TODO return a real token
 }
 
 module.exports.init = init;

@@ -6,10 +6,11 @@ export function login(credentials) {
 		axios.post(url, credentials  )
 			.then( response => {
 				if (response.status === 200 ) {
-					console.log('correct');
+					console.log(`groupSessionToken in services : ${response.data.groupSessionToken}`);
 					resolve({
 						logged : true,
-						jwt: response.data.jwt
+						jwt: response.data.jwt,
+						groupSessionToken: response.data.groupSessionToken
 					});
 				} else {
 					console.log('incorrect');
@@ -25,14 +26,61 @@ export function login(credentials) {
 	});
 }
 
-export function postScenario(scenario, jwt) {
+export function token(credentials){
+	return new Promise( (resolve, reject) => {
+		const url = `${BASE_URL}/api/token`;
+		chrome.extension.getBackgroundPage().console.log(`api token url : ${url}`);
+		chrome.extension.getBackgroundPage().console.log(`api token credentials : ${JSON.stringify(credentials)}`);
+		axios.post(url, credentials  )
+			.then( response => {
+				if (response.status === 200 ) {
+					console.log(`groupSessionToken in services : ${response.data.groupSessionToken}`);
+					resolve({
+						logged : true,
+						jwt: response.data.jwt,
+						groupSessionToken: response.data.groupSessionToken
+					});
+				} else {
+					console.log('incorrect');
+					resolve({
+						logged : false
+					});
+				}
+			})
+			.catch((ex) => {
+				console.log('incorrect');
+				reject(ex);
+			});
+	});
+}
+
+export function postScenario(scenario, jwt, groupSessionToken) {
 	return new Promise((resolve, reject) => {
 		const url = `${BASE_URL}/api/scenario`;
-		axios.post(url, scenario, {headers: {'Authorization': `Bearer ${jwt}`}})
+		axios.post(url, {
+			scenario: scenario,
+			groupSessionToken: groupSessionToken
+		}, {headers: {'Authorization': `Bearer ${jwt}`}})
 			.then( response => {
 				resolve(response.data);
 			})
 			.catch(err => {
+				reject(err);
+			});
+	});
+}
+
+export function getEntropies(jwt, groupSessionToken, number){  //TODO
+	return new Promise((resolve, reject) => {
+		const url = `${BASE_URL}/api/entropy/${groupSessionToken}/${number}`;
+		axios.get(url, {headers: {'Authorization': `Bearer ${jwt}`}})
+			.then( response => {
+				chrome.extension.getBackgroundPage().console.log('Are my updates working ?');
+				chrome.extension.getBackgroundPage().console.log(`Successfully got data in services.getEntropies`);
+				resolve(response.data);
+			})
+			.catch(err => {
+				chrome.extension.getBackgroundPage().console.log(`Error in services.getEntropies : ${err.stack}`);
 				reject(err);
 			});
 	});
