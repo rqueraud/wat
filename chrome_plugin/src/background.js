@@ -28,9 +28,11 @@ class PageManager {
 	}
 
 	handleMessage(msg, sender, sendResponse) {
+		//chrome.extension.getBackgroundPage().console.log(`Received message : ${msg.kind}`);
 		switch (msg.kind) {
 
 		case 'login':
+			//chrome.extension.getBackgroundPage().console.log('Received login message from background.js');
 			login(msg.credential)
 				.then(response => {
 					if (response.logged === false) {
@@ -128,7 +130,7 @@ class PageManager {
 			getEntropies(this.jwt, msg.groupSessionToken, msg.number)
 				.then(data => {
 					chrome.extension.getBackgroundPage().console.log(`data is : ${JSON.stringify(data)}`);
-					let values = data.map(datum => datum.value);
+					let values = data.map(datum => datum.entropyValue);
 					chrome.extension.getBackgroundPage().console.log(`values are : ${JSON.stringify(values)}`);
 					sendResponse({
 						data: values
@@ -176,7 +178,8 @@ class PageManager {
 	webNavigationCompleted({tabId, frameId}) {
 		if (this.tab && (this.tab.id === tabId  ))  {
 			if (frameId === 0) {
-				chrome.tabs.executeScript(this.tab.id, {file:'listener.bundle.js'});
+				chrome.tabs.executeScript(this.tab.id, {file:'listener.bundle.js'},
+					result => chrome.extension.getBackgroundPage().console.log(result == undefined?'Failed loading attachListener':'Success loading attachListener'));
 				chrome.tabs.executeScript(this.tab.id, {file:'favicon.js'});
 			}
 		}

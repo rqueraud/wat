@@ -61,6 +61,16 @@ services:
     depends_on:
       - "rabbit"
       - "mongo"
+  calculator:
+    build: 
+      context: ../../
+      dockerfile: ./calculator/Dockerfile
+    image: "xblanc/wat_calculator"
+    volumes:
+      - screens:/tmp/run/screen
+    depends_on:
+      - "rabbit"
+      - "mongo"
 
 volumes:
   screens:

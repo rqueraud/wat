@@ -2,7 +2,7 @@ const ObjectID = require('mongodb').ObjectID;
 const express = require('express');
 const passport = require('passport');
 
-function init(serverNames, webServer, db, logger) {
+function init(serverNames, webServer, db, logger, channel) {
 	logger.info('record scenario');
 	let router = express.Router();
 	router.use(passport.authenticate('jwt', {failureRedirect: '/login' , session:false}));
@@ -52,7 +52,7 @@ function init(serverNames, webServer, db, logger) {
 
 	router
 		.post('/',(req, res) => {
-			logger.info(`GroupSessionToken is : ${req.body.groupSessionToken}`);
+			//logger.info(`GroupSessionToken is : ${req.body.groupSessionToken}`);
 			let user = req.user;
 			db.collection('scenario', (err, scenarioCollection) => {
 				if (err) {
@@ -79,6 +79,9 @@ function init(serverNames, webServer, db, logger) {
 							logger.error(err);
 							res.status(500).send(err).end();
 						});
+					
+					channel.sendToQueue('scenarioQueue', Buffer.from(JSON.stringify(newScenario)), {persistent: true},
+						(e, _) => {if(e) logger.error("Failed to put into scenario queue : : ", JSON.stringify(newScenario));});  
 				}
 			});
 		});

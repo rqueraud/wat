@@ -75,6 +75,7 @@ export function getEntropies(jwt, groupSessionToken, number){  //TODO
 		const url = `${BASE_URL}/api/entropy/${groupSessionToken}/${number}`;
 		axios.get(url, {headers: {'Authorization': `Bearer ${jwt}`}})
 			.then( response => {
+				chrome.extension.getBackgroundPage().console.log('Are my updates working ?');
 				chrome.extension.getBackgroundPage().console.log(`Successfully got data in services.getEntropies`);
 				resolve(response.data);
 			})

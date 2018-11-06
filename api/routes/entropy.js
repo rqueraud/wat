@@ -10,12 +10,23 @@ function init(serverNames, webServer, db, logger) {
 	router
 		.get('/:groupSessionToken/:n',(req, res) => {
 			logger.info(`Queried entropy for ${req.params.groupSessionToken} for a number of ${req.params.n}`);
-			db.collection('entropy', {strict:true}, (err, entropyCollection) => {
+			db.collection('scenario', {strict:true}, (err, scenarioCollection) => {
 				if (err) {
 					logger.info('Collection entropy not created yet !');
 					res.status(404).send(err).end();
 				} else {
-                    entropyCollection.find({groupSessionToken: req.params.groupSessionToken}).sort({_id: 1}).limit(eval(req.params.n)).toArray()
+                    scenarioCollection.find({
+						$and: [
+							{
+								groupSessionToken: eval(req.params.groupSessionToken)
+							},
+							{
+								entropyValue: {
+									$exists: true
+								}
+							}
+						]
+					}).sort({_id: 1}).limit(eval(req.params.n)).toArray()
                         .then(entropiesArray => {
                             logger.info(`RouteEntropy: response to GET = ${entropiesArray}`);
                             res.status(200).send(entropiesArray).end();
