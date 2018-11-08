@@ -1,4 +1,4 @@
-import { login , getJWTFromGitHubSession, postScenario , token, getEntropies } from './services.js';
+import { login , getJWTFromGitHubSession, postScenario , token, getEntropies, newToken } from './services.js';
 
 class PageManager {
 	constructor() {
@@ -41,7 +41,6 @@ class PageManager {
 						this.isLoggedIn = true;
 						this.jwt = response.jwt;
 					}
-					this.groupSessionToken = response.groupSessionToken;
 					let responseToMsg = {isLoggedIn : this.isLoggedIn, groupSessionToken: this.groupSessionToken};
 					sendResponse(responseToMsg);
 				})
@@ -51,18 +50,20 @@ class PageManager {
 				});
 			return true;
 
+		case 'newToken':
+			newToken().then(response => {
+				this.groupSessionToken = response.groupSessionToken;
+				sendResponse({groupSessionToken: response.groupSessionToken});
+			});
+			return true;
+
 		case 'token':
-			token(msg.credential)
+			token(msg.groupSessionToken)
 				.then(response => {
-					if (response.logged === false) {
-						this.isLoggedIn = false;
-					} else {
-						this.isLoggedIn = true;
-						this.jwt = response.jwt;
-					}
 					this.groupSessionToken = response.groupSessionToken;
-					let responseToMsg = {isLoggedIn : this.isLoggedIn};
-					sendResponse(responseToMsg);
+					sendResponse({
+						groupSessionToken: response.groupSessionToken
+					});
 				})
 				.catch((_) => {
 					//console.log(ex);
@@ -92,6 +93,7 @@ class PageManager {
 		case 'logout':
 			this.isLoggedIn = false;
 			this.jwt = undefined;
+			this.groupSessionToken = undefined;
 			break;
 
 		case 'start':

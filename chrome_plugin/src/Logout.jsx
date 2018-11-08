@@ -8,7 +8,8 @@ export default class Logout extends React.Component {
 		super(props);
 		this.state = {
 			isLoggedIn : false,
-			redirect : false
+			redirect : false,
+			groupSessionToken: undefined
 		};
 		this.handleClick = this.handleClick.bind(this);
 	}
@@ -18,7 +19,8 @@ export default class Logout extends React.Component {
 			this.setState( (prevState) => {
 				return {
 					redirect: prevState.redirect,
-					isLoggedIn : response.isLoggedIn
+					isLoggedIn : response.isLoggedIn,
+					groupSessionToken: response.groupSessionToken
 				};
 			});
 		});
@@ -30,7 +32,8 @@ export default class Logout extends React.Component {
 		this.setState( () => {
 			return {
 				isLoggedIn: false,
-				redirect : true
+				redirect : true,
+				groupSessionToken: undefined
 			};
 		});
 	}

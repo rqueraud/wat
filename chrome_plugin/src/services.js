@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ok } from 'assert';
 
 export function login(credentials) {
 	return new Promise( (resolve, reject) => {
@@ -26,30 +27,46 @@ export function login(credentials) {
 	});
 }
 
-export function token(credentials){
+export function newToken(){
 	return new Promise( (resolve, reject) => {
 		const url = `${BASE_URL}/api/token`;
-		chrome.extension.getBackgroundPage().console.log(`api token url : ${url}`);
-		chrome.extension.getBackgroundPage().console.log(`api token credentials : ${JSON.stringify(credentials)}`);
-		axios.post(url, credentials  )
+		axios.get(url)
 			.then( response => {
 				if (response.status === 200 ) {
-					console.log(`groupSessionToken in services : ${response.data.groupSessionToken}`);
+					chrome.extension.getBackgroundPage().console.log(`groupSessionToken from newToken service response : ${response.data.groupSessionToken}`);
 					resolve({
-						logged : true,
-						jwt: response.data.jwt,
 						groupSessionToken: response.data.groupSessionToken
 					});
 				} else {
 					console.log('incorrect');
 					resolve({
-						logged : false
+						groupSessionToken: undefined
 					});
 				}
 			})
-			.catch((ex) => {
-				console.log('incorrect');
-				reject(ex);
+			.catch((e) => {
+				console.log(e.stack);
+				reject(e);
+			});
+	});
+}
+
+export function token(groupSessionToken){
+	return new Promise( (resolve, reject) => {
+		const url = `${BASE_URL}/api/token`;
+		axios.post(url, {groupSessionToken: groupSessionToken})
+			.then( response => {
+				if (response.status === 200 ) {
+					resolve({
+						groupSessionToken: response.data.groupSessionToken
+					});
+				} else {
+					reject(`/api/token error ${response.status}`);
+				}
+			})
+			.catch((e) => {
+				console.log(e.stack);
+				reject(e);
 			});
 	});
 }

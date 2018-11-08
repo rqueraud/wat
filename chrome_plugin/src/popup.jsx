@@ -31,7 +31,7 @@ class PopupPlugin extends React.Component {
 	}
 
 	setGroupSessionTokenInState(groupSessionToken){
-		console.log(`Set state in popup.jsx : ${groupSessionToken}`);
+		chrome.extension.getBackgroundPage().console.log(`Set state in popup.jsx : ${groupSessionToken}`);
 		this.setState({groupSessionToken: groupSessionToken});
 	}
 
@@ -49,15 +49,18 @@ class PopupPlugin extends React.Component {
 						<Col lg={12}>
 							<Route
 								exact path="/popup.html"
-								render={(props) => <Login {...props} callbackFromParent={this.setGroupSessionTokenInState} />}
+								render={(props) => <Login {...props} />}
 							/>
 							<Route path="/logout" component={Logout}/>
+							<Route 
+								path="/token"
+								render={(props) => <Token {...props} callbackFromParent={this.setGroupSessionTokenInState} />}
+							/>
 							<Route
 								path="/record"
 								render={(props) => <Record {...props} groupSessionToken={this.state.groupSessionToken} />}
 							/>
 							<Route path="/github" component={GitHub}/>
-							<Route path="/token" component={Token}/>
 						</Col>
 					</Row>
 				</Grid>
