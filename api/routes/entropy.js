@@ -18,7 +18,7 @@ function init(serverNames, webServer, db, logger) {
                     scenarioCollection.find({
 						$and: [
 							{
-								groupSessionToken: eval(req.params.groupSessionToken)
+								groupSessionToken: req.params.groupSessionToken
 							},
 							{
 								entropyValue: {

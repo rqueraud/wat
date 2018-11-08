@@ -18,7 +18,6 @@ export default class Login extends React.Component {
 		};
 		this.handleSubmit = this.handleSubmit.bind(this);
 		this.handleGitHub = this.handleGitHub.bind(this);
-		this.handleToken = this.handleToken.bind(this);
 	}
 
 	componentDidMount() {
@@ -47,14 +46,11 @@ export default class Login extends React.Component {
 		chrome.runtime.sendMessage({ kind: 'login' , credential: credential }, (response) => {
 			console.log(`isLoggedIn:${response.isLoggedIn}`);
 			if (response.isLoggedIn) {
-				console.log(`groupSessionToken in react : ${response.groupSessionToken}`);
-				this.props.callbackFromParent(response.groupSessionToken);
 				this.setState(() => {
 					return {
 						credential: credential,
 						isLoggedIn : true,
-						message : null,
-						token: response.groupSessionToken
+						message : null
 					};
 				});
 				button.removeChild(span);
@@ -64,7 +60,6 @@ export default class Login extends React.Component {
 						credential: credential,
 						isLoggedIn : false,
 						message : 'Invalid username or password.',
-						token: ''
 					};
 				});
 				button.removeChild(span);
@@ -102,16 +97,6 @@ export default class Login extends React.Component {
 		);
 	}
 
-	handleToken(event){
-		event.preventDefault();
-		console.log('Handle token from login');
-		this.setState(() => {
-			return {
-				wantToken: true
-			};
-		});
-	}
-
 	render() {
 		let gitHub;
 		if (process.env.NODE_ENV === 'debug') {
@@ -121,12 +106,8 @@ export default class Login extends React.Component {
 		}
 		
 		if (this.state.isLoggedIn) {
-			console.log('Join token is : ' + this.state.token);
-			return <Redirect to="/record"/>;
-		} 
-		else if(this.state.wantToken){
 			return <Redirect to="/token"/>;
-		}
+		} 
 		else {
 			return (
 				<Form horizontal onSubmit={this.handleSubmit}>
@@ -151,7 +132,6 @@ export default class Login extends React.Component {
 						<Col xsOffset={2} xs={10}><Button id="loginButton" bsStyle="primary" type="submit">Login</Button></Col>
 					</FormGroup>
 					{gitHub}
-					{<a href="#" onClick={this.handleToken}> Or join session with a Token </a>}
 				</Form>
 			);
 		}
